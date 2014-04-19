@@ -1,0 +1,10 @@
+{
+  "name": "LoozConfiguration",
+  "description": "Configuration and deployment grunt tasks for Looz",
+  "author": "Yair Tavor",
+  "engine": "node 0.10.26",
+  "version": "0.0.1",
+  "devDependencies": {
+    "grunt": "^0.4.4"
+  }
+}

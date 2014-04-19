@@ -1,0 +1,8 @@
+{
+    "name": "LoozAPI",
+    "description": "Looz API server",
+    "author": "Yair Tavor",
+    "engine": "node 0.10.26",
+    "version": "0.0.1",
+    "devDependencies": {}
+}
