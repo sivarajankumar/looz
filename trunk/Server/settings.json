@@ -1,0 +1,6 @@
+{
+	"domain" : "127.0.0.1",
+	"port" : 8090,
+	"dbDomain" : "localhost",	
+	"dbPort" : 8091
+}
