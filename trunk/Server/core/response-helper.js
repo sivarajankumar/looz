@@ -1,10 +1,12 @@
 (function(){
 	'use strict';
 
-	var contentTypes = {
+	var mongoose = require('mongoose'),
+		contentTypes = {
 			html : 'text/html',
 			json : 'application/json',
-			text : 'text/plain'
+			text : 'text/plain',
+			form : 'application/x-www-form-urlencoded'
 		},
 		responseCodes = {
 			ok : 200,
@@ -20,7 +22,7 @@
 
 	function sendSimpleMessage(response, message, code){
 		response.setHeader(headers.contentType, contentTypes.text);
-		response.statusCode = code;
+		response.statusCode = code;	
 		response.end(message);
 	}
 
@@ -35,10 +37,12 @@
 	}
 
 	function sendError(response, message){
+		message = parseError(message);
 		sendSimpleMessage(response, message, responseCodes.serverError);
 	}
 
 	function sendBadRequest(response, message){
+		message = parseError(message);
 		sendSimpleMessage(response, message, responseCodes.badRequest);
 	}
 
@@ -46,11 +50,76 @@
 		sendSimpleMessage(response, message, responseCodes.notImplemented);
 	}
 
+	function sendForbidden(response, message){
+		sendSimpleMessage(response, message, responseCodes.forbidden);
+	}
+
+	function sendErrorByCode(response, code, result){
+		switch(code){
+			case responseCodes.ok :
+				sendOk(response, result);
+				break;
+			case responseCodes.forbidden :
+				sendForbidden(response, result);
+				break;
+			case responseCodes.notFound :
+				sendNotFound(response, result);
+				break;
+			case responseCodes.badRequest :
+				sendBadRequest(response, result);
+				break;
+			case responseCodes.serverError :
+				sendError(response, result);
+				break; 
+			case responseCodes.notImplemented :
+				sendNotImplemented(response, result);
+				break; 
+		}
+	}
+
+	function isValidCode(code){
+		var result = false,
+			codeKey;
+
+		if('number' === typeof code){
+			for(codeKey in responseCodes){
+				if(responseCodes.hasOwnProperty(codeKey) && responseCodes[codeKey] === code){
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	function parseError(error){
+		var validationError = mongoose.Error.ValidationError,
+			result;
+
+		if('string' === typeof error){
+			result = { generalError : error };
+		}
+		else if(error instanceof validationError){
+			//TODO : handle mongoose validation errors
+		}
+		return JSON.stringify(result);
+	}
+
 	exports.send = {
 		notFound 		: sendNotFound,
 		ok				: sendOk,
 		error 			: sendError,
 		badRequest 		: sendBadRequest,
-		notImplemented 	: sendNotImplemented
+		notImplemented 	: sendNotImplemented,
+		forbidden 		: sendForbidden,
+		byCode			: sendErrorByCode
+	};
+
+	exports.isValidCode = isValidCode;
+
+	exports.types = {
+		contentTypes : contentTypes,
+		responseCodes : responseCodes,
+		headers : headers
 	};
 })();

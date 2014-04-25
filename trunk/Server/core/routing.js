@@ -3,7 +3,7 @@
 
 	var _ = require('lodash-node'),
 		responseHelper = require('./response-helper.js'),
-		urlHelper = require('url'),
+		requestHelper = require('./request-helper.js'),	
 		routs = {};	
 
 	/* Look inside the routeHandlers for actions registered to methods, for example 
@@ -74,25 +74,43 @@
 			return _.has(routeHandlers, functionName) && _.isFunction(routeHandlers[functionName]);		
 		}
 
-		function postProccess(result){
+		/**
+		 * This is the 'callback' function that is passed to the entity during routing. The entity
+		 * should use this function to return successfull result or throw errors.
+		 *
+		 * To respond with successfull, just send 'result' or call the 'callback' without
+		 * parameters (if you have nothing to send).
+		 * 
+		 * To respond with errors, pass error message in the 'result' and error code for the error.
+		 * You can pass 'true' to the error instead of code to send back 500 server error.
+		 */
+		function callback(result, error){
 			//TODO: further filter things according to query string or headers
-			responseHelper.send.ok(response, result);
+			if(!error){
+				responseHelper.send.ok(response, result);
+			}
+			else{
+				if(responseHelper.isValidCode(error) === false){
+					error = responseHelper.types.responseCodes.serverError;			
+				}
+				responseHelper.send.byCode(response, error, result);
+			}
 		}
 
 		function invokeCustomAction(method, action){
 			switch(method){
 				case 'GET':
 				case 'DELETE':
-					action(request, response, postProccess);
+					action(request, response, callback);
 					break;
 				case 'POST':
 				case 'PUT':
-					action({}, request, response, postProccess);
+					action({}, request, response, callback);
 					break;
 			}
 		}
 
-		function invokeCrudAction(method){
+		function invokeItemCrudAction(method){
 			var action,
 				content;
 
@@ -100,14 +118,10 @@
 				case 'GET':
 					action = 'getItem';
 					content = request.routeKeys[1];
-					break;
+					break;				
 				case 'PUT':
-					action = 'createItem';
-					content = null; // Get request body
-					break;
-				case 'POST':
 					action = 'updateItem';
-					content = null; // Get request body
+					content = request.content;
 					break;
 				case 'DELETE':
 					action = 'deleteItem';
@@ -115,7 +129,40 @@
 					break;
 			}
 			if(canInvoke(action)){
-				routeHandlers[action](content, postProccess);
+				routeHandlers[action](content, callback);
+			}
+			else{
+				responseHelper.send.notImplemented(response);
+			}
+		}
+
+		function invokeListCrudAction(method){
+			var action,
+				content;
+
+			switch(method){
+				case 'GET':
+					action = 'getList';
+					break;
+				case 'POST':
+					action = 'createItem';
+					content = request.content; 
+					break;
+				case 'PUT':
+					action = 'updateList';
+					content = request.content;
+					break;
+				case 'DELETE':
+					action = 'deleteList';
+					break;
+			}
+			if(canInvoke(action)){
+				if(_.isUndefined(content) === false){
+					routeHandlers[action](content, callback);
+				}
+				else{
+					routeHandlers[action](callback);
+				}
 			}
 			else{
 				responseHelper.send.notImplemented(response);
@@ -123,12 +170,7 @@
 		}
 
 		if(routeLength === 1){
-			if(canInvoke('getList')){
-				routeHandlers.getList(postProccess);
-			}
-			else{
-				responseHelper.send.notImplemented(response);
-			}
+			invokeListCrudAction(request.method);
 		}
 		else{
 			customAction = findActionByMethod(request.method, request.routeKeys[1], routeHandlers);
@@ -136,24 +178,15 @@
 				invokeCustomAction(request.method, customAction);
 			}
 			else{
-				invokeCrudAction(request.method);
+				invokeItemCrudAction(request.method);
 			}			
 		}
-	}	
+	}
 
-	exports.set = function(key, routeHandlers){
-		routs[key] = routeHandlers;
-	};
-
-	exports.route = function(request, response){
+	function startRouting(request, response){
 		var routeKey,
 			routeHandlers;
 
-		// extend request to hold parsed URL
-		request.paresdUrl = urlHelper.parse(request.url, true);
-		request.routeKeys = request.paresdUrl.pathname.split('/');
-		request.routeKeys = _.without(request.routeKeys, '');
-		
 		//You can use 'default key' to register route handlers for the domain, i.e 'http://my.domain.com/'
 		routeKey = request.routeKeys.length > 0 ? request.routeKeys[0] : 'default key';  
 		routeHandlers = routs.hasOwnProperty(routeKey) ? routs[routeKey] : null;
@@ -163,6 +196,48 @@
 		else{
 			responseHelper.send.badRequest(response, 'Unable to do that thing you wanted. Sorry.');
 		}
+	}
+
+	/* 
+	 * Allows entities to register thier function to the routing system.
+	 * 'key' is the first argument of the url, i.e. http://my.domain.com/[key]
+	 * and 'routeHandlers' is a mapping object that allows the entity to map functions to
+	 * requests under the provided key. routeHandlers should look like this:
+	 * {
+	 *		getList : function(callback), 				//when calling http://my.domain.com/[key] with GET
+	 *		createItem : function(entity, callback), 	//when calling http://my.domain.com/[key] with POST
+	 *		updateList : function(entities, callback), 	//when calling http://my.domain.com/[key] with PUT
+	 *		deleteList : function(id, callback), 		//when calling http://my.domain.com/[key] with DELETE
+	 *		getItem	: function(id, callback), 			//when calling http://my.domain.com/[key]/:id with GET
+	 *		updateItem : function(entity, callback), 	//when calling http://my.domain.com/[key]/:id with PUT
+	 *		deleteItem : function(id, callback), 		//when calling http://my.domain.com/[key]/:id with DELETE
+	 *		get : {
+	 *			[some key] : function(request, response, callback)	//when calling http://my.domain.com/[key]/:[some key] with GET
+	 *		},
+	 *		delete : {
+	 *			[some key] : function(request, response, callback)	//when calling http://my.domain.com/[key]/:[some key] with DELETE
+	 *		},
+	 *		post : {
+	 *			[some key] : function(body, request, response, callback) //when calling http://my.domain.com/[key]/:[some key] with POST
+	 *		}
+	 *		put : {
+	 *			[some key] : function(body, request, response, callback) //when calling http://my.domain.com/[key]/:[some key] with PUT
+	 *		}
+	 * }
+	 * 
+	 * The first items names (getItem, deleteItem, etc') are hard coded names. You could ignore them by 
+	 * calling the get, post, put or delete to get more verbouse API like http://domain.com/users/create/:id 
+	 * or to add non-crud functionality.
+	 *
+	 * The callback is used by the entity to return successfull result or throw an error. See callback() mehtod.
+	 * 
+	 */
+	exports.set = function(key, routeHandlers){
+		routs[key] = routeHandlers;
+	};
+
+	exports.route = function(request, response){
+		requestHelper.get(request, response, startRouting);
 	};
 
 })();

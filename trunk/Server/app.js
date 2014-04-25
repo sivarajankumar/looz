@@ -7,8 +7,8 @@
 		routing = require('./core/routing.js'),
 		activities = require('./entities/activity.js');
 
-	activities.register();
-	
+	activities.register();	
+
 	db.open(settings, function dbOpend(){		
 		server.start(settings, routing);
 	});
