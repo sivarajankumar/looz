@@ -4,6 +4,7 @@
 	var mongoose = require('mongoose'),
 		moment = require('moment'),
 		routing = require('../core/routing.js'),
+		responseHelper = require('../core/response-helper.js'),
 		ObjectId = mongoose.Schema.Types.ObjectId,
 	 	schema,
 		Activity;
@@ -14,7 +15,7 @@
 			name : { type: String, required: true },
 			contact : String,
 			startDate : { type: Date, required: true },			
-			enddDate : { type: Date, required: true, validate : validateEndDate },
+			endDate : { type: Date, required: true, validate : validateEndDate },
 			comments : String,
 			location : ObjectId
 		});
@@ -30,40 +31,52 @@
 		 return isValid;
 	}
 
-	function getActivityList(callback){
-		Activity.find(function (err, activities) {
-		  if (err){
-		  	callback(err, true);
-		  }
+	function invokeCallback(error, result, callback){
+		if (error){
+	  		callback(result, error);
+		  } 
 		  else{
-		  	callback(activities);
+		  	callback(result);
 		  }
+	}
+
+	function getActivityList(callback){
+		Activity.find(function (error, activities) {
+			invokeCallback(error, activities, callback);		  
 		});		
 	}
 
 	function getActivity(id, callback){
-		callback({name:'activity1'});
+		Activity.findById(id, function(error, activity){
+			if(!activity){
+				error = responseHelper.types.responseCodes.notFound;
+			}
+			invokeCallback(error, activity, callback);
+		});
 	}
 
-	function updateActivity(activity, callback){
-		callback({name:'activity1 updated'});
+	function updateActivity(id, postedActivity, callback){
+		Activity.update(
+			{ _id : id }, 
+			postedActivity, 
+			function(error){ //function arguments: error, numberAffected, rawResponse
+				invokeCallback(error, postedActivity, callback);
+			}		  
+		);
 	}
 
 	function createActivity(postedActivity, callback){
 		var activity = new Activity(postedActivity);
 
-		activity.save(function (err, newActivity) {
-		  if (err){
-	  		callback(err, true);
-		  } 
-		  else{
-		  	callback(newActivity);
-		  }
+		activity.save(function (error, newActivity) {
+		  invokeCallback(error, newActivity, callback);	
 		});		
 	}
 
 	function deleteActivity(id, callback){
-		callback(id);
+		Activity.remove({_id : id}, function(error){
+			invokeCallback(error, null, callback);
+		});
 	}
 
 	function customGetStuff(request, response, callback){
