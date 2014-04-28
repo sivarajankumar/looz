@@ -94,13 +94,18 @@
 
 	function parseError(error){
 		var validationError = mongoose.Error.ValidationError,
-			result;
+			validatorError = mongoose.Error.ValidatorError,
+			result = {};
 
 		if('string' === typeof error){
 			result = { generalError : error };
 		}
 		else if(error instanceof validationError){
-			//TODO : handle mongoose validation errors
+			for(var e in error.errors){
+				if(error.errors[e] instanceof validatorError){
+					result[e] = error.errors[e].message;
+				}
+			}			
 		}
 		return JSON.stringify(result);
 	}

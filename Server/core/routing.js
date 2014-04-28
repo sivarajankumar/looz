@@ -112,6 +112,7 @@
 
 		function invokeItemCrudAction(method){
 			var action,
+				key,
 				content;
 
 			switch(method){
@@ -121,6 +122,7 @@
 					break;				
 				case 'PUT':
 					action = 'updateItem';
+					key = request.routeKeys[1];
 					content = request.content;
 					break;
 				case 'DELETE':
@@ -129,7 +131,12 @@
 					break;
 			}
 			if(canInvoke(action)){
-				routeHandlers[action](content, callback);
+				if(!key){
+					routeHandlers[action](content, callback);
+				}
+				else{
+					routeHandlers[action](key, content, callback);
+				}
 			}
 			else{
 				responseHelper.send.notImplemented(response);
@@ -137,7 +144,7 @@
 		}
 
 		function invokeListCrudAction(method){
-			var action,
+			var action,				
 				content;
 
 			switch(method){
@@ -204,13 +211,13 @@
 	 * and 'routeHandlers' is a mapping object that allows the entity to map functions to
 	 * requests under the provided key. routeHandlers should look like this:
 	 * {
-	 *		getList : function(callback), 				//when calling http://my.domain.com/[key] with GET
-	 *		createItem : function(entity, callback), 	//when calling http://my.domain.com/[key] with POST
-	 *		updateList : function(entities, callback), 	//when calling http://my.domain.com/[key] with PUT
-	 *		deleteList : function(id, callback), 		//when calling http://my.domain.com/[key] with DELETE
-	 *		getItem	: function(id, callback), 			//when calling http://my.domain.com/[key]/:id with GET
-	 *		updateItem : function(entity, callback), 	//when calling http://my.domain.com/[key]/:id with PUT
-	 *		deleteItem : function(id, callback), 		//when calling http://my.domain.com/[key]/:id with DELETE
+	 *		getList : function(callback), 					//when calling http://my.domain.com/[key] with GET
+	 *		createItem : function(entity, callback), 		//when calling http://my.domain.com/[key] with POST
+	 *		updateList : function(id, entities, callback), 	//when calling http://my.domain.com/[key] with PUT
+	 *		deleteList : function(id, callback), 			//when calling http://my.domain.com/[key] with DELETE
+	 *		getItem	: function(id, callback), 				//when calling http://my.domain.com/[key]/:id with GET
+	 *		updateItem : function(entity, callback), 		//when calling http://my.domain.com/[key]/:id with PUT
+	 *		deleteItem : function(id, callback), 			//when calling http://my.domain.com/[key]/:id with DELETE
 	 *		get : {
 	 *			[some key] : function(request, response, callback)	//when calling http://my.domain.com/[key]/:[some key] with GET
 	 *		},
