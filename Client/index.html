@@ -1,0 +1,39 @@
+<!Doctype html>
+<html  lang="en" ng-app="app" ng-controller="appCTRL">
+<head>
+	<title>Looz Scheduler</title>
+	<link href="style/bootstrap.min.css" rel="stylesheet" />
+	<link href="style/layout.css" rel="stylesheet" />
+</head>
+<body>
+	<section class="stickyLayout">
+
+		<header class="stickyHeader light-background">
+			<div class="navbar-header">		     
+		      <a class="navbar-brand" href="#">Looz</a>
+		    </div>
+		</header>
+
+		<article class="stickyBody">
+			<div id="dailyCalendar">
+				<daily-calendar></daily-calendar>
+			</div>
+		</article>
+
+		<footer class="stickyFooter light-background">
+			<div class="text-center ">
+				<em>All rights reserved to Yair Tavor 2014.</em>
+			</div>
+		</footer> 
+
+	<section>
+</body>
+<script src="scripts/vendor/jquery-2.1.0.min.js"></script>
+<script src="scripts/vendor/moment.min.js"></script>
+<script src="scripts/vendor/angular.min.js"></script>
+<script src="scripts/vendor/angular-route.min.js"></script>
+<script src="scripts/source/app.js"></script>
+<script src="scripts/source/objects/time.js"></script>
+<script src="scripts/source/controllers/app-ctrl.js"></script>
+<script src="scripts/source/directives/daily-calendar.js"></script>
+</html>

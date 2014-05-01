@@ -1,0 +1,35 @@
+
+html, body, .stickyLayout{
+	width : 100%;
+	height: 100%;
+	margin:0;
+	padding:0;
+}
+
+.stickyLayout{
+	display: table;
+}
+
+.stickyLayout .stickyHeader,
+.stickyLayout .stickyFooter{
+	display: table-row;	
+	height: 1px;
+	background: #DFE8EF;
+}
+.stickyLayout .stickyBody{
+	display: table-row;
+	height:100%;
+	background: #FFF7EC;
+}
+
+.stickyFooter {
+	color: gray;
+}
+
+.stickyFooter div{
+	padding:5px 0;
+}
+
+#dailyCalendar {
+	width:600px;
+}
