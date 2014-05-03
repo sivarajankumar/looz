@@ -16,58 +16,61 @@
 		}
 
 		return {
-			restrict : 'E',			
-			template:  '<canvas width="{{width}}" height="{{height}}">\
-						</canvas>',
+			restrict : 'E',
+			scope: {
+				locations : '='
+			},		
+			template:  '<table>\
+						</table>',
 			link : function(scope, element, attributes){
-				var canvas = element.find("canvas")[0].getContext("2d"),
-					width, height,
-					startTime, endTime, 
-					numberOfRows, numberOfColumns, 
-					cellWidth, cellHeight,
-					i;
+				var startTime, endTime, 
+					numberOfRows, numberOfColumns;					
 
-				function drawGrid(){
-					for(i = 0; i <= numberOfRows; i++){
-						canvas.moveTo(0,(i*cellHeight));
-						canvas.lineTo(width, (i*cellHeight));
-						canvas.stroke();
+				function generateDataRow(rowIndex, time){
+					var row = '<tr>',
+						z;
+
+					row += '<td>'+ time.toString() +'</td>';
+					for(z = 0; z < numberOfColumns; z++){
+						row += '<td></td>';
 					}
-
-					for(i = 0; i <= numberOfColumns; i++){
-						canvas.moveTo((cellWidth * i), 0);
-						canvas.lineTo((cellWidth * i), height);
-						canvas.stroke();
-					}	
+					row += '</tr>';
+					return row;					
 				}
 
-				function drawHours(startTime){
-					var y;
+				function generateHeaderRow(){
+					var row = '<tr>',
+						z;
 
-					for(i = 1; i <= numberOfRows +1; i++){
-						y = (i*cellHeight) - 5;
-						canvas.fillText(startTime.toString(), 0, y);
-						startTime.next();						
+					row += '<th></th>';
+					for(z = 0; z < numberOfColumns; z++){
+						row += '<th></th>';
 					}
+					row += '</tr>';
+					return row;					
+				}
+
+				function drawTable(){
+					var time = startTime.clone(),
+						tbody = '<tbody>',
+						thead = '<thead>',
+						i;
+
+					thead += generateHeaderRow() + '</thead>';
+					for(i = 0; i < numberOfRows; i++){						
+						tbody += generateDataRow(i, time);
+						time.next();
+					}
+					tbody += '</tbody>';
+
+					return thead + tbody;
 				}
 
 				startTime = new app.Time(8, 0);
 				endTime = new app.Time(23, 0);
 				numberOfRows = getNumberOfRows(startTime, endTime);
-				numberOfColumns = 4 + 1; // TODO: fix this to be the number of locations
-				width = element.parent().width();				
-				cellWidth = Math.round(width / numberOfColumns);
-				cellHeight = 20;
-				height = Math.round(cellHeight * numberOfRows);	
-
-				scope.height = height;
-				scope.width = width;
-
-				setTimeout(function(){
-					drawGrid();
-					drawHours(startTime.clone());
-				},0);
-				
+				numberOfColumns = scope.locations.length;
+				element.append(drawTable());
 			}
 		};
 	}]);

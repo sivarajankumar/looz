@@ -17,7 +17,8 @@
 			notImplemented : 501
 		},
 		headers = {
-			contentType : 'Content-Type'
+			contentType : 'Content-Type',
+			allowOrigin : 'Access-Control-Allow-Origin'
 		};
 
 	function sendSimpleMessage(response, message, code){

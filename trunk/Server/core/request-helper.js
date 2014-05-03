@@ -2,6 +2,7 @@
 	'use strict';
 
 	var _ = require('lodash-node'),
+		settings = require('./settings.js'),
 		urlHelper = require('url'),
 		responseHelper = require('./response-helper.js'),
 		querystring = require('querystring'),
@@ -15,11 +16,17 @@
 		return request;
 	}
 
+	function allowCrossDomain(response){
+		response.setHeader(types.headers.allowOrigin, settings.clientDomain);
+		return response;
+	}
+
 	exports.get = function(request, response, callback){
 		var requestBody ='',
 			contentType = request.headers[types.headers.contentType.toLowerCase()];
 
 		request = extendUrlAndRouteKeys(request);
+		response = allowCrossDomain(response);
 
 		if(request.method === 'POST' || request.method === 'PUT'){
 			request.on('data', function(chunk) {

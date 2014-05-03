@@ -8,6 +8,7 @@
 			routing.route(req, res);
 		});
 		server.listen(settings.port, settings.domain);
+		console.log('Server started on http://' + settings.domain + ':' + settings.port + '/');
 		console.log('Ready to go! Lets get started!');
 	};
 })();
