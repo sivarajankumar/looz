@@ -44,13 +44,13 @@
 
 					row += '<th></th>';
 					for(z = 0; z < numberOfColumns; z++){
-						row += '<th></th>';
+						row += '<th>'+ scope.locations[z].name +'</th>';
 					}
 					row += '</tr>';
 					return row;					
 				}
 
-				function drawTable(){
+				function renderTable(){
 					var time = startTime.clone(),
 						tbody = '<tbody>',
 						thead = '<thead>',
@@ -66,11 +66,25 @@
 					return thead + tbody;
 				}
 
+				function render(){
+					element.html('');
+					numberOfColumns = scope.locations.length;
+					element.append(renderTable());
+				}
+
 				startTime = new app.Time(8, 0);
 				endTime = new app.Time(23, 0);
 				numberOfRows = getNumberOfRows(startTime, endTime);
-				numberOfColumns = scope.locations.length;
-				element.append(drawTable());
+				
+
+				scope.$watch('locations', function(newValue){
+					if(newValue.$promise){
+						newValue.$promise.then(function(){
+							scope.locations = newValue;
+							render();
+						});							
+					}									
+				});
 			}
 		};
 	}]);
