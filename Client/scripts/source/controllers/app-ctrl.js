@@ -3,8 +3,10 @@
 
 	var app = angular.module('app');
 
-	app.controller('appCTRL', ['$scope', function($scope){
-		
+
+	app.controller('appCTRL', ['$scope', 'api', function($scope, api){
+		var locationResource = api.getLocationResource();
+		$scope.locations = locationResource.query();
 	}]);
 
 })(angular, jQuery);
