@@ -1,0 +1,1 @@
+Looz (Hebrew abbreviation for "time schedule") is an app for scheduling classrooms. It includes NodeJS REST server, mongoDB database and a AngularJS client.
